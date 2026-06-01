@@ -14,4 +14,4 @@ build/
 .DS_Store
 
 # Logs
-*.log
+*.log.vscode/
