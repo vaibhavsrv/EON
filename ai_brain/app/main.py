@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 
 from app.prompts import build_system_prompt
 from app.validator import validate_tool_call
+from app.router import route_tool
 
 import os
 import json
@@ -17,7 +18,6 @@ client = OpenAI(
 )
 
 app = FastAPI()
-
 
 class Request(BaseModel):
     message: str
@@ -52,8 +52,9 @@ async def chat(req: Request):
     output = output.replace("```json", "")
     output = output.replace("```", "")
 
-    total_call = json.loads(output)
 
+    # TOOL CALL SHOULD BE IN THIS FORMAT:
+    total_call = json.loads(output)
     is_valid, message = validate_tool_call(total_call)
 
     if not is_valid:
@@ -61,4 +62,5 @@ async def chat(req: Request):
             "error": message
         }
 
-    return total_call
+    action = route_tool(total_call)
+    return action
