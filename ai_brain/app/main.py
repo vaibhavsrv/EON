@@ -3,6 +3,9 @@ from pydantic import BaseModel
 from openai import OpenAI
 from dotenv import load_dotenv
 
+from app.prompts import build_system_prompt
+from app.validator import validate_tool_call
+
 import os
 import json
 
@@ -15,81 +18,28 @@ client = OpenAI(
 
 app = FastAPI()
 
+
 class Request(BaseModel):
     message: str
 
-SYSTEM_PROMPT = """
-You are EON.
-
-You are an AI assistant that converts user requests into structured JSON tool calls.
-
-Return ONLY valid JSON.
-
-Available tools:
-
-1. control_device
-Parameters:
-- setting
-- action
-
-2. navigate
-Parameters:
-- destination
-
-3. send_message
-Parameters:
-- contact
-- message
-
-4. make_call
-Parameters:
-- contact
-
-Examples:
-
-User:
-Turn bluetooth on
-
-Output:
-{
-  "tool": "control_device",
-  "input": {
-    "setting": "bluetooth",
-    "action": "on"
-  }
-}
-
-User:
-Call John
-
-Output:
-{
-  "tool": "make_call",
-  "input": {
-    "contact": "John"
-  }
-}
-"""
 
 @app.get("/")
 async def root():
-
     return {
         "status": "EON Brain Running"
     }
+
 
 @app.post("/chat")
 async def chat(req: Request):
 
     response = client.chat.completions.create(
         model="llama-3.3-70b-versatile",
-
         messages=[
             {
                 "role": "system",
-                "content": SYSTEM_PROMPT
+                "content": build_system_prompt()
             },
-
             {
                 "role": "user",
                 "content": req.message
@@ -102,4 +52,13 @@ async def chat(req: Request):
     output = output.replace("```json", "")
     output = output.replace("```", "")
 
-    return json.loads(output)
+    total_call = json.loads(output)
+
+    is_valid, message = validate_tool_call(total_call)
+
+    if not is_valid:
+        return{
+            "error": message
+        }
+
+    return total_call
