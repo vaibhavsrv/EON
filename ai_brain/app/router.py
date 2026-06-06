@@ -1,33 +1,78 @@
-# ai_brain/app/router.py
-def route_tool(tool_call):
+"""
+Tool routing and action mapping
+"""
 
-    tool = tool_call["tool"]
+from typing import Dict, Any
+from app.utils.logger import get_logger
+from app.utils.constants import *
 
+logger = get_logger(__name__)
+
+
+def route_tool(tool_call: Dict[str, Any]) -> Dict[str, Any]:
+    """Route tool call to appropriate action"""
+    
+    tool = tool_call.get("tool", "unknown")
+    parameters = tool_call.get("parameters", {})
+    
+    logger.debug(f"Routing tool: {tool}", extra={"context": {"tool": tool}})
+    
     if tool == "make_call":
         return {
-            "action": "call",
-            "data": tool_call["parameters"]
+            "action": ACTION_TYPE_CALL,
+            "data": {
+                "contact": parameters.get("contact")
+            }
         }
-
-    if tool == "send_message":
+    
+    elif tool == "send_message":
         return {
-            "action": "message",
-            "data": tool_call["parameters"]
+            "action": ACTION_TYPE_MESSAGE,
+            "data": {
+                "contact": parameters.get("contact"),
+                "message": parameters.get("message"),
+                "app": parameters.get("app", MESSAGING_APP_SMS)
+            }
         }
-
-    if tool == "navigate":
+    
+    elif tool == "navigate":
         return {
-            "action": "navigation",
-            "data": tool_call["parameters"]
+            "action": ACTION_TYPE_NAVIGATE,
+            "data": {
+                "destination": parameters.get("destination")
+            }
         }
-
-    if tool == "control_device":
+    
+    elif tool == "control_device":
         return {
-            "action": "device_control",
-            "data": tool_call["parameters"]
+            "action": ACTION_TYPE_DEVICE_CONTROL,
+            "data": {
+                "setting": parameters.get("setting"),
+                "action": parameters.get("action"),
+                "value": parameters.get("value")
+            }
         }
-
-    return {
-        "action": "unknown",
-        "data": {}
-    }
+    
+    elif tool == "open_app":
+        return {
+            "action": ACTION_TYPE_OPEN_APP,
+            "data": {
+                "app_name": parameters.get("app_name")
+            }
+        }
+    
+    elif tool == "control_connectivity":
+        return {
+            "action": ACTION_TYPE_CONNECTIVITY,
+            "data": {
+                "connectivity_type": parameters.get("connectivity_type"),
+                "action": parameters.get("action")
+            }
+        }
+    
+    else:
+        logger.warning(f"Unknown tool: {tool}")
+        return {
+            "action": ACTION_TYPE_UNKNOWN,
+            "data": {}
+        }
