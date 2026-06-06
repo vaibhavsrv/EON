@@ -3,6 +3,7 @@ package com.eon.network
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
 import java.io.IOException
 
 class BrainClient {
@@ -14,12 +15,9 @@ class BrainClient {
         callback: (String) -> Unit
     ) {
 
-        val json =
-            """
-            {
-                "message":"$message"
-            }
-            """.trimIndent()
+        val jsonObject = JSONObject()
+        jsonObject.put("message", message)
+        val json = jsonObject.toString()
 
         val body =
             json.toRequestBody(
@@ -31,6 +29,8 @@ class BrainClient {
                 .url("http://10.0.2.2:8000/chat")
                 .post(body)
                 .build()
+
+        println("EON INFO = Requesting: http://10.0.2.2:8000/chat")
 
         client.newCall(request)
             .enqueue(

@@ -17,52 +17,40 @@ class ToolExecutor(
         when (action) {
 
             "call" -> {
-
-                val contact =
-                    data["contact"]?.toString()
-                        ?: return
-
-                CallingBridge(context)
-                    .call(contact)
+                val contact = data["contact"]?.toString() ?: run {
+                    println("EON ERROR = Missing 'contact' for call action")
+                    return
+                }
+                CallingBridge(context).call(contact)
             }
 
             "navigation" -> {
-
-                val destination =
-                    data["destination"]?.toString()
-                        ?: return
-
-                NavigationBridge(context)
-                    .navigate(destination)
+                val destination = data["destination"]?.toString() ?: run {
+                    println("EON ERROR = Missing 'destination' for navigation action")
+                    return
+                }
+                println("EON INFO = Navigating to: $destination")
+                NavigationBridge(context).navigate(destination)
             }
 
             "device_control" -> {
-
-                val setting =
-                    data["setting"]?.toString()
-                        ?: return
-
-                val actionType =
-                    data["action"]?.toString()
-                        ?: return
-
-                if (
-                    setting == "bluetooth"
-                    && actionType == "on"
-                ) {
-
-                    DeviceBridge()
-                        .bluetoothOn()
+                val setting = data["setting"]?.toString() ?: run {
+                    println("EON ERROR = Missing 'setting' for device_control action")
+                    return
                 }
-
-                if (
-                    setting == "bluetooth"
-                    && actionType == "off"
-                ) {
-
-                    DeviceBridge()
-                        .bluetoothOff()
+                val actionType = data["action"]?.toString() ?: run {
+                    println("EON ERROR = Missing 'action' for device_control action")
+                    return
                 }
+                println("EON INFO = Device Control: $setting -> $actionType")
+                if (setting == "bluetooth") {
+                    if (actionType == "on") DeviceBridge().bluetoothOn()
+                    else if (actionType == "off") DeviceBridge().bluetoothOff()
+                }
+            }
+
+            else -> {
+                println("EON ERROR = Unknown action: $action")
             }
         }
     }

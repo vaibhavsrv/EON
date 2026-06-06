@@ -6,34 +6,39 @@ class ToolRouter {
 
     fun route(
         response: String
-    ): Pair<String, Map<String, Any>> {
+    ): Pair<String, Map<String, Any>>? {
 
-        val json = JSONObject(response)
+        return try {
+            val json = JSONObject(response)
 
-        val action =
-            json.getString("action")
+            val action =
+                json.getString("action")
 
-        val dataObject =
-            json.getJSONObject("data")
+            val dataObject =
+                json.getJSONObject("data")
 
-        val data =
-            mutableMapOf<String, Any>()
+            val data =
+                mutableMapOf<String, Any>()
 
-        val keys =
-            dataObject.keys()
+            val keys =
+                dataObject.keys()
 
-        while (keys.hasNext()) {
+            while (keys.hasNext()) {
 
-            val key =
-                keys.next()
+                val key =
+                    keys.next()
 
-            data[key] =
-                dataObject.getString(key)
+                data[key] =
+                    dataObject.getString(key)
+            }
+
+            Pair(
+                action,
+                data
+            )
+        } catch (e: Exception) {
+            println("EON ERROR = Parsing failed: ${e.message}")
+            null
         }
-
-        return Pair(
-            action,
-            data
-        )
     }
 }
